@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather App</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(to right, #1cb5e0, #000046);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      color: white;
+      transition: background 0.5s;
+    }
+    .card {
+      background: rgba(0,0,0,0.6);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      width: 350px;
+      text-align: center;
+      transition: transform 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 15px;
+    }
+    input {
+      width: 80%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      background: rgba(255,255,255,0.9);
+    }
+    button {
+      background: #1cb5e0;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #1390b8;
+      transform: scale(1.05);
+    }
+    .weather-info {
+      margin-top: 20px;
+      opacity: 0;
+      height: 0;
+      overflow: hidden;
+      transition: all 0.5s;
+    }
+    .show {
+      opacity: 1;
+      height: auto;
+    }
+    .temp {
+      font-size: 3rem;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #ffd369;
+    }
+    .weather-icon {
+      width: 80px;
+      height: 80px;
+    }
+    .details {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 15px;
+    }
+    .loading {
+      display: none;
+      margin: 15px auto;
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #1cb5e0;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Weather App</h1>
+    <input type="text" id="cityInput" placeholder="Enter any city (e.g. London)" autocomplete="off">
+    <button onclick="getWeather()">Get Weather</button>
+    <div class="loading" id="loading"></div>
+    <div class="weather-info" id="weatherInfo"></div>
+  </div>
+
+  <script>
+    async function getWeather() {
+      const city = document.getElementById("cityInput").value.trim();
+      if (!city) return;
+      
+      const loading = document.getElementById("loading");
+      const weatherDiv = document.getElementById("weatherInfo");
+      
+      loading.style.display = "block";
+      weatherDiv.classList.remove("show");
+      
+      try {
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=b951973a7e900da5e4d084b335b6dbac`);
+        if (!response.ok) throw new Error("City not found");
+        
+        const data = await response.json();
+        displayWeather(data);
+      } catch (error) {
+        weatherDiv.innerHTML = `<p style="color:red;">${error.message}. Please try another city.</p>`;
+        weatherDiv.classList.add("show");
+      } finally {
+        loading.style.display = "none";
+      }
+    }
+
+    function displayWeather(data) {
+      const weatherDiv = document.getElementById("weatherInfo");
+      const weather = data.weather[0];
+      const iconUrl = `https://openweathermap.org/img/wn/${weather.icon}@2x.png`;
+      
+      weatherDiv.innerHTML = `
+        <h2>${data.name}, ${data.sys.country}</h2>
+        <img src="${iconUrl}" alt="${weather.description}" class="weather-icon">
+        <p class="temp">${Math.round(data.main.temp)}°C</p>
+        <p style="font-size:1.2rem">${weather.main} (${weather.description})</p>
+        <div class="details">
+          <div>${data.wind.speed} m/s</div>
+          <div>${data.main.humidity}%</div>
+          <div>${data.main.feels_like}°C</div>
+        </div>
+      `;
+      weatherDiv.classList.add("show");
+      
+      // Change background based on temperature
+      const temp = data.main.temp;
+      const bgColor = temp > 30 ? '#ff7b25' : temp > 20 ? '#1cb5e0' : '#000046';
+      document.body.style.background = `linear-gradient(to right, ${bgColor}, #000046)`;
+    }
+
+    // Allow search on Enter key
+    document.getElementById("cityInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") getWeather();
+    });
+  </script>
+</body>
+</html>
